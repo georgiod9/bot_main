@@ -2,7 +2,7 @@ import { REDIS_HOST, REDIS_PORT, REDIS_PASSWORD } from "../config"
 import { getWalletEncodedPrivateKeysForOrderId } from "../utils"
 import Bull from "bull"
 
-const redisOptions = { redis: { host: REDIS_HOST, port: parseInt(REDIS_PORT, 10), password: REDIS_PASSWORD } }
+const redisOptions = { redis: { host: REDIS_HOST, port: parseInt(REDIS_PORT, 10), password: REDIS_PASSWORD, keyPrefix: "{bump}:" } }
 const bumpQueue = new Bull("bump", redisOptions)
 
 export async function addOrderTasks(orderID: number, token: string, frequency: number, duration: number, funding: number) {
