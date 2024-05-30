@@ -4,7 +4,7 @@ This script is dedicated to reading logs on bumpers solana program. Its task is 
 
 ## Deployment Steps
 
-**Env Config** / First, setup env variables:
+**1/ Env Config** / First, setup env variables:
 
 ```
 ENCRYPT_PASSWORD='' // RANDOM PASSWORD FOR USERS WALLETS ENCRYPTION
@@ -14,10 +14,10 @@ REDIS_PORT='' // REDIS PORT
 REDIS_PASSWORD='' // REDIS PASSWORD
 ```
 
-**Install Dependencies**/ Second, install the required dependencies by running:
+**2/ Install Dependencies**/ Second, install the required dependencies by running:
 
 `npm install`
 
-**Run the Main Script**/ Last, run main script : 
+**3/ Run the Main Script**/ Last, run main script : 
 
 `npm run start`
