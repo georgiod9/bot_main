@@ -9,6 +9,8 @@ import { FilterQuery } from 'mongoose';
 import Wallet from '../models/wallet';
 import crypto from 'crypto'
 import Status from '../models/status';
+import Delay from '../models/delay';
+import Task from '../models/tasks';
 
 dotenv.config();
 
@@ -30,11 +32,14 @@ export async function genWallet(walletNbr: number): Promise<IWallet[]> {
 
 export const connectDB = async () => {
     try {
+        console.log(`Connecting to db....`)
         await mongoose.connect(MONGODB_URI)
+        console.log(`Mongo db connected.`)
     } catch (e) {
         console.log("\u001b[1;31m" + 'ERROR ' + "\u001b[0m" + 'DB / CONNEXION ERROR =', e)
     }
 }
+
 
 export async function addOrderToDB(orderId: number, clientAddr: string, tokenAddress: string, botNbr: number, freq: number, duration: number, funding: number, fee: number): Promise<boolean> {
     console.log(`> Saving order #${orderId} to DB...`)
@@ -60,6 +65,51 @@ export async function addOrderToDB(orderId: number, clientAddr: string, tokenAdd
         return true;
     } catch (e) {
         console.log("\u001b[1;31m" + 'ERROR ' + "\u001b[0m" + 'DB / SAVING ORDER =', e)
+        console.log('-------------------------------------------------------------')
+        return false;
+    }
+}
+
+interface TaskObject {
+    orderId: number;
+    taskName: string;
+    taskNumber: number;
+    totalDelayMs: number;
+    expectedEndDate: Date;
+    assignedBot?: number;
+}
+export async function saveTasksToDB(tasks: TaskObject[]) {
+    console.log(`> Saving tasks to DB...`);
+    console.log('-------------------------------------------------------------')
+    try {
+        await connectDB();
+        await Task.insertMany(tasks);
+
+        console.log('\u001b[1;32m' + 'SUCCESS ' + '\u001b[0m' + 'DB / ORDER TASKS LIST SAVED');
+        console.log('-------------------------------------------------------------');
+        return true;
+    } catch (error) {
+        console.log("\u001b[1;31m" + 'ERROR ' + "\u001b[0m" + 'DB / SAVING ORDER TASKS LIST =', error);
+        console.log('-------------------------------------------------------------')
+        return false;
+    }
+}
+
+export async function addOrderDelayConfigToDB(orderId: number, startTime: Date, totalDelayMs: number) {
+    console.log(`> Saving order #${orderId}'s delay configuration to DB...`)
+    console.log('-------------------------------------------------------------')
+
+    try {
+        await connectDB();
+        const delay = new Delay({
+            orderId,
+            startTime,
+            totalDelayMs
+        });
+
+        await delay.save();
+    } catch (error) {
+        console.log("\u001b[1;31m" + 'ERROR ' + "\u001b[0m" + 'DB / SAVING ORDER DELAY CONFIG =', error);
         console.log('-------------------------------------------------------------')
         return false;
     }
@@ -144,6 +194,20 @@ export async function incrementTxStatus() {
     const ok = await Status.findOneAndUpdate({}, { $inc: { tx: 1 } }, { new: true })
     if (ok) {
         console.log("\u001b[1;32m" + 'SUCCESS ' + "\u001b[0m" + `tx status incremented to ${ok.tx}`)
+        console.log('-------------------------------------------------------------')
+        return ok.tx;
+    } else {
+        console.log("\u001b[1;31m" + 'ERROR ' + "\u001b[0m" + `could not update tx status`)
+        console.log('-------------------------------------------------------------')
+        return null;
+    }
+}
+
+export async function decrementTxStatus() {
+    await connectDB()
+    const ok = await Status.findOneAndUpdate({}, { $inc: { tx: -1 } }, { new: true })
+    if (ok) {
+        console.log("\u001b[1;32m" + 'SUCCESS ' + "\u001b[0m" + `tx status decremented to ${ok.tx}`)
         console.log('-------------------------------------------------------------')
         return ok.tx;
     } else {

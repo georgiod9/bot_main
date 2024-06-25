@@ -4,3 +4,6 @@ package-lock.json
 /tests
 /optimized
 ok.ts
+
+bot-main-db.tasks.json
+bot-main-db.wallets.json

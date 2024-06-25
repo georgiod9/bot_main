@@ -19,7 +19,7 @@ export interface IOrderBase {
     tokenAddress: string;
     botNbr: number;
     freq: number;
-    duration: number;
+    duration: number; //in hrs
     funding: number;
     fee: number;
 }
