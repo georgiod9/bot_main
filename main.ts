@@ -2,15 +2,19 @@ import { RPC, PROGRAM_ID } from './config/constants';
 import { Connection, PublicKey } from '@solana/web3.js';
 import { createOrder, cancelOrder } from './_process';
 import { parseLogCancel, parseLogOrder } from './utils/parsing';
-import { getTxStatus, incrementTxStatus } from './utils';
+import { decrementTxStatus, getTxStatus, incrementTxStatus } from './utils';
+import { pingExecService } from './queue';
 
 const connection = new Connection(RPC)
 const programId = new PublicKey(PROGRAM_ID)
 
 async function getTransactionLogs(status: number) {
     try {
+        console.log(`Current status:`, status)
         const signatures = await connection.getConfirmedSignaturesForAddress2(programId)
+        console.log(`Retrieved signatures for program ID ${PROGRAM_ID}:`, signatures.length)
         if (status >= 0 && status < signatures.length) {
+            console.log(`status within range....`)
             const txSign = signatures.reverse()[status].signature
             const txDetails = await connection.getTransaction(txSign)
             if (txDetails && txDetails.meta && txDetails.meta.logMessages) {
@@ -21,6 +25,9 @@ async function getTransactionLogs(status: number) {
                 return []
             }
         }
+        else {
+            // await decrementTxStatus();
+        }
     } catch (e) {
         console.error(e)
         return []
@@ -29,8 +36,12 @@ async function getTransactionLogs(status: number) {
 
 async function check(status: number) {
     const txLog = await getTransactionLogs(status)
+    await pingExecService();
     if (txLog) {
         const logMessage = txLog.find(log => log.startsWith('Program log:'))
+        if (!logMessage) {
+            console.log(`tXLOG`, txLog)
+        }
         if (logMessage && logMessage.includes('NewOrder')) {
             console.log(`> Got a new order`)
             console.log('-------------------------------------------------------------')
@@ -45,13 +56,20 @@ async function check(status: number) {
             console.log('-------------------------------------------------------------')
             const cancelRequestID = parseLogCancel(logMessage)
             if (cancelRequestID != null) {
+                console.log(`Cancelling order id:`, cancelRequestID)
                 await cancelOrder(cancelRequestID)
             }
             await incrementTxStatus()
-        } else {
+        } else if (logMessage) {
             console.log('> NO VALUE or SPAM TX')
+            console.log(`Log mesage`, logMessage)
             console.log('-------------------------------------------------------------')
             incrementTxStatus()
+        }
+        else {
+            console.log('> NULL VALUE LOG MESSAGE OR ERROR')
+            console.log(`Log mesage`, logMessage)
+            console.log('-------------------------------------------------------------')
         }
     } else {
         console.log('> No new transactions, retrying in 30sec...')
