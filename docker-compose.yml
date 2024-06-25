@@ -1,0 +1,15 @@
+version: '3.8'
+
+services:
+  bot_listener:
+    image: bumper-bot-listener
+    build: .
+    ports:
+      - "8080:8080"
+    environment:
+      - ENCRYPT_PASSWORD=${ENCRYPT_PASSWORD}
+      - MONGODB_URI=${MONGODB_URI}
+      - REDIS_HOST=${REDIS_HOST}
+      - REDIS_PORT=${REDIS_PORT}
+      - REDIS_PASSWORD=${REDIS_PASSWORD}
+
