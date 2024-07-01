@@ -19,6 +19,7 @@ export const RPC_DEV = 'https://lingering-damp-lambo.solana-mainnet.quiknode.pro
 export const RPC = 'https://thrilling-orbital-model.solana-mainnet.quiknode.pro/3ece94e189b82ceca072c6ac7f3b3d09e6504463/';
 export const PROGRAM_ID_dev = '2kptyUB75N4fZE7FfkMpC1qxoM6VWJ26HN95QFDgN9P4'
 export const PROGRAM_ID = 'EJPQnTwg1soxB1qpYMh4B2ZRcgfVdUMghKbuH95kKLa1'
+export const NETWORK_LATENCY = 1000; // Latency to communicate with Mongo DocumentDB in ms
 
 // SOLANA DEVNET - NETWORK CONFIG
 // export const NETWORK = 'devnet'
