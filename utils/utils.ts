@@ -2,7 +2,7 @@ import dotenv from 'dotenv';
 import { PublicKey, Account } from '@solana/web3.js';
 import { IWallet } from './interfaces';
 import bs58 from 'bs58';
-import { MONGODB_URI, ENCRYPT_PASSWORD } from '../config'
+import { MONGODB_URI, ENCRYPT_PASSWORD, NETWORK_LATENCY } from '../config'
 import mongoose from "mongoose";
 import Order, { IOrder } from '../models/order';
 import { FilterQuery } from 'mongoose';
@@ -32,8 +32,12 @@ export async function genWallet(walletNbr: number): Promise<IWallet[]> {
 
 export const connectDB = async () => {
     try {
-        console.log(`Connecting to db....`)
-        await mongoose.connect(MONGODB_URI)
+        console.log(`Connecting to db....`, MONGODB_URI)
+        await mongoose.connect(MONGODB_URI,
+            {
+                tlsCAFile: `./global-bundle.pem`
+            },
+        )
         console.log(`Mongo db connected.`)
     } catch (e) {
         console.log("\u001b[1;31m" + 'ERROR ' + "\u001b[0m" + 'DB / CONNEXION ERROR =', e)
@@ -59,8 +63,10 @@ export async function addOrderToDB(orderId: number, clientAddr: string, tokenAdd
         });
         const savedOrder = await newOrder.save()
         if (savedOrder) {
-            console.log("\u001b[1;32m" + 'SUCCESS ' + "\u001b[0m" + `order #${orderId} saved to DB`)
+            console.log("\u001b[1;32m" + 'SUCCESS ' + "\u001b[0m" + `order #${orderId} saved to DB`, savedOrder)
             console.log('-------------------------------------------------------------')
+            await new Promise(resolve => setTimeout(resolve, NETWORK_LATENCY)); // 1000ms 
+
         }
         return true;
     } catch (e) {
@@ -153,6 +159,7 @@ export async function genWalletAndSaveDB(OrderID: number, WalletNbr: number): Pr
             if (!ok) throw new Error(`Failed to save wallet for Bot${index + 1}`)
         })
         await Promise.all(promises)
+        await new Promise(resolve => setTimeout(resolve, NETWORK_LATENCY)); // 1000ms 
         return true
     } catch (e) {
         console.log(e)
@@ -223,6 +230,7 @@ export async function setOrderCancelStatus(orderID: number) {
     if (ordercanceled) {
         console.log("\u001b[1;32m" + 'SUCCESS ' + "\u001b[0m" + `order #${orderID} status updated to 'canceled'`)
         console.log('-------------------------------------------------------------')
+        await new Promise(resolve => setTimeout(resolve, NETWORK_LATENCY)); // wait for db to resolve save + network latency
     } else {
         console.log("\u001b[1;31m" + 'ERROR ' + "\u001b[0m" + `modifying order #${orderID} status`)
         console.log('-------------------------------------------------------------')
@@ -236,7 +244,10 @@ export async function getWalletEncodedPrivateKeysForOrderId(orderID: number) {
         let i
         let sk = []
         for (i = 0; order.wallet.length > i; i++) {
+            console.log(`Getting wallet for index `, i)
             const wallet = await Wallet.findById({ _id: order.wallet[i]._id })
+            console.log(`Wallet -> `, wallet)
+
             sk.push(wallet.privateKey)
         } return sk
     } else return null
