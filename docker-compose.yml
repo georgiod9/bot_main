@@ -2,7 +2,7 @@ version: '3.8'
 
 services:
   bot_listener:
-    image: bumper-bot-listener
+    image: 0xgio/bumper-bot-listener:latest
     build: .
     ports:
       - "8080:8080"

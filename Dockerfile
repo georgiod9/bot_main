@@ -13,6 +13,8 @@ RUN npm install
 # Copy the rest of the application code to the container
 COPY . .
 
+COPY /global-bundle.pem ./global-bundle.pem
+
 # Expose the port the app runs on
 EXPOSE 8080
 
