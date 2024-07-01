@@ -90,7 +90,9 @@ export async function addOrderTasks(orderID: number, token: string, frequency: n
     const durationMs = duration * 60 * 60 * 1000;
     const actualEndTimeMs = new Date().getTime() + durationMs;
 
+    console.log(`Creating tasks for buy token for pks:`, PKS)
     for (let i = 0; i < PKS.length; i++) {
+
         bumpQueue.add({ task: "buy_token", orderId: `#${orderID.toString()}`, param: orderID, skcrypted: PKS[i], token, amountSol: ((funding / PKS.length) / 2) }, { delay })
         // Debug tasks
         tasks.push({ orderId: orderID, taskName: "buy_token", taskNumber: tasks.length + 1, totalDelayMs: delay, expectedEndDate: calculateExpectedEndDate(delay), assignedBot: i })
