@@ -40,7 +40,18 @@ async function check(status: number) {
     if (txLog) {
         const logMessage = txLog.find(log => log.startsWith('Program log:'))
         if (!logMessage) {
-            console.log(`tXLOG`, txLog)
+            console.log(`Log message does not include "Program log" string. Searching for deployment tx.`)
+
+            const deployMessage = txLog.find(log => log.startsWith('Deployed program'))
+
+            if (deployMessage && deployMessage.includes(PROGRAM_ID)) {
+                console.log('> Identified Initial deployment transaction.')
+                console.log('-------------------------------------------------------------')
+                incrementTxStatus();
+            }
+            else {
+                console.log(`Unidentified program log:`, txLog)
+            }
         }
         if (logMessage && logMessage.includes('NewOrder')) {
             console.log(`> Got a new order`)
@@ -60,7 +71,9 @@ async function check(status: number) {
                 await cancelOrder(cancelRequestID)
             }
             await incrementTxStatus()
-        } else if (logMessage) {
+        }
+
+        else if (logMessage) {
             console.log('> NO VALUE or SPAM TX')
             console.log(`Log mesage`, logMessage)
             console.log('-------------------------------------------------------------')
