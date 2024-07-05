@@ -29,15 +29,20 @@ export async function genWallet(walletNbr: number): Promise<IWallet[]> {
     }
     return wallets;
 }
-
+export let isMongoConnected = false;
 export const connectDB = async () => {
     try {
+        if (isMongoConnected) {
+            console.log('> Database already connected. Using existing database connection');
+            return;
+        }
         console.log(`Connecting to db....`, MONGODB_URI)
         await mongoose.connect(MONGODB_URI,
             {
                 tlsCAFile: `./global-bundle.pem`
             },
         )
+        isMongoConnected = true;
         console.log(`Mongo db connected.`)
     } catch (e) {
         console.log("\u001b[1;31m" + 'ERROR ' + "\u001b[0m" + 'DB / CONNEXION ERROR =', e)
@@ -49,7 +54,9 @@ export async function addOrderToDB(orderId: number, clientAddr: string, tokenAdd
     console.log(`> Saving order #${orderId} to DB...`)
     console.log('-------------------------------------------------------------')
     try {
-        await connectDB()
+        if (!isMongoConnected) {
+            await connectDB()
+        }
         const newOrder = new Order({
             id: orderId,
             client: clientAddr,
@@ -88,7 +95,9 @@ export async function saveTasksToDB(tasks: TaskObject[]) {
     console.log(`> Saving tasks to DB...`);
     console.log('-------------------------------------------------------------')
     try {
-        await connectDB();
+        if (!isMongoConnected) {
+            await connectDB()
+        }
         await Task.insertMany(tasks);
 
         console.log('\u001b[1;32m' + 'SUCCESS ' + '\u001b[0m' + 'DB / ORDER TASKS LIST SAVED');
@@ -106,7 +115,9 @@ export async function addOrderDelayConfigToDB(orderId: number, startTime: Date, 
     console.log('-------------------------------------------------------------')
 
     try {
-        await connectDB();
+        if (!isMongoConnected) {
+            await connectDB()
+        }
         const delay = new Delay({
             orderId,
             startTime,
@@ -123,7 +134,9 @@ export async function addOrderDelayConfigToDB(orderId: number, startTime: Date, 
 
 export async function saveWallet(orderId: number, pubKey: string, secKey: string, index: number): Promise<boolean> {
     try {
-        await connectDB()
+        if (!isMongoConnected) {
+            await connectDB()
+        }
         const order = await Order.findOne({ id: orderId } as FilterQuery<IOrder>)
         const encryptedSk = await encrypt(secKey)
         if (!order) {
@@ -178,7 +191,9 @@ export async function encrypt(sk: string) {
 }
 
 export async function getTxStatus() {
-    await connectDB()
+    if (!isMongoConnected) {
+        await connectDB()
+    }
     const stat = await Status.countDocuments()
     if (stat == 0) {
         const initStatus = new Status({ tx: 0 })
@@ -197,7 +212,9 @@ export async function getTxStatus() {
 }
 
 export async function incrementTxStatus() {
-    await connectDB()
+    if (!isMongoConnected) {
+        await connectDB()
+    }
     const ok = await Status.findOneAndUpdate({}, { $inc: { tx: 1 } }, { new: true })
     if (ok) {
         console.log("\u001b[1;32m" + 'SUCCESS ' + "\u001b[0m" + `tx status incremented to ${ok.tx}`)
@@ -210,8 +227,27 @@ export async function incrementTxStatus() {
     }
 }
 
+export async function resetTxStatus() {
+    if (!isMongoConnected) {
+        await connectDB()
+    }
+    const ok = await Status.findOneAndUpdate({}, { $set: { tx: 1 } }, { new: true })
+    if (ok) {
+        console.log("\u001b[1;32m" + 'SUCCESS ' + "\u001b[0m" + `tx status reset to ${ok.tx}`)
+        console.log('-------------------------------------------------------------')
+        return ok.tx;
+    } else {
+        console.log("\u001b[1;31m" + 'ERROR ' + "\u001b[0m" + `could not reset tx status`)
+        console.log('-------------------------------------------------------------')
+        return null;
+    }
+}
+
+
 export async function decrementTxStatus() {
-    await connectDB()
+    if (!isMongoConnected) {
+        await connectDB()
+    }
     const ok = await Status.findOneAndUpdate({}, { $inc: { tx: -1 } }, { new: true })
     if (ok) {
         console.log("\u001b[1;32m" + 'SUCCESS ' + "\u001b[0m" + `tx status decremented to ${ok.tx}`)
@@ -225,7 +261,9 @@ export async function decrementTxStatus() {
 }
 
 export async function setOrderCancelStatus(orderID: number) {
-    await connectDB()
+    if (!isMongoConnected) {
+        await connectDB()
+    }
     const ordercanceled = await Order.findOneAndUpdate({ id: orderID }, { $set: { status: 'canceled' } }, { new: true })
     if (ordercanceled) {
         console.log("\u001b[1;32m" + 'SUCCESS ' + "\u001b[0m" + `order #${orderID} status updated to 'canceled'`)
@@ -238,7 +276,9 @@ export async function setOrderCancelStatus(orderID: number) {
 }
 
 export async function getWalletEncodedPrivateKeysForOrderId(orderID: number) {
-    await connectDB()
+    if (!isMongoConnected) {
+        await connectDB()
+    }
     const order = await Order.findOne({ id: orderID })
     if (order) {
         let i

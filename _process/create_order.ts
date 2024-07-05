@@ -1,10 +1,12 @@
-import { addOrderDelayConfigToDB, addOrderToDB, genWalletAndSaveDB, IOrderBase, saveTasksToDB } from '../utils';
+import { addOrderDelayConfigToDB, addOrderToDB, genWalletAndSaveDB, IOrderBase, isMongoConnected, saveTasksToDB } from '../utils';
 import { connectDB } from '../utils';
 import { Order as OrderMod } from '../models/order';
 import { addOrderTasks } from '../queue';
 
 export async function createOrder(Order: IOrderBase) {
-    await connectDB()
+    if (!isMongoConnected) {
+        await connectDB()
+    }
     const orderID = await OrderMod.countDocuments() + 1
     const orderok = await addOrderToDB(orderID, Order.client, Order.tokenAddress, Order.botNbr, Order.freq, Order.duration, Order.funding, Order.fee)
     if (!orderok) throw new Error(`Error saving order #${orderID}`)
@@ -19,7 +21,7 @@ export async function createOrder(Order: IOrderBase) {
             const order = await addOrderTasks(orderID, Order.tokenAddress, Order.freq, Order.duration, Order.funding);
             if (order) {
                 await addOrderDelayConfigToDB(order?.orderId, order?.startTime, order?.totalDelayMs);
-                await saveTasksToDB(order.tasks);
+                // await saveTasksToDB(order.tasks);
             }
         }
     }

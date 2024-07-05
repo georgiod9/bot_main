@@ -94,6 +94,7 @@ export async function addOrderTasks(orderID: number, token: string, frequency: n
     for (let i = 0; i < PKS.length; i++) {
 
         bumpQueue.add({ task: "buy_token", orderId: `#${orderID.toString()}`, param: orderID, skcrypted: PKS[i], token, amountSol: ((funding / PKS.length) / 2) }, { delay })
+
         // Debug tasks
         tasks.push({ orderId: orderID, taskName: "buy_token", taskNumber: tasks.length + 1, totalDelayMs: delay, expectedEndDate: calculateExpectedEndDate(delay), assignedBot: i })
 
@@ -101,14 +102,13 @@ export async function addOrderTasks(orderID: number, token: string, frequency: n
     }
     const IMS = frequency * 1000
     const NIS = Math.floor(duration * 3600000 / IMS)
-    // let forceEnd = false;
+
     for (let j = 0; j < NIS; j++) {
         const taskDelay = delay + j * IMS;
         const expectedEndTimeMs = startTime + taskDelay;
 
         // Break out of the task distribution loop
         if (expectedEndTimeMs > actualEndTimeMs) {
-            // forceEnd = true;
             break;
         }
 
@@ -124,27 +124,22 @@ export async function addOrderTasks(orderID: number, token: string, frequency: n
 
     delay += duration * 3600000
 
-    // const durationMs = duration * 60 * 60 * 1000;
-    // const actualEndTimeMs = new Date().getTime() + durationMs;
     const delayDrift = ((Math.abs(delay - actualEndTimeMs)) / delay) * 100;
 
-    // Force send the `withdraw`
+    // Check if estimated delay is more than 5%
     if (delayDrift > 5) {
-        delay = actualEndTimeMs - new Date().getTime();
-        // bumpQueue.add({ task: "withdraw", orderId: `#${orderID.toString()}`, param: orderID }, { delay: actualEndTimeMs - new Date().getTime() })
-
+        delay = actualEndTimeMs - new Date().getTime(); // Enforce actual end time
     }
-    // else {
-    //     bumpQueue.add({ task: "withdraw", orderId: `#${orderID.toString()}`, param: orderID }, { delay })
 
-    // }
     bumpQueue.add({ task: "withdraw", orderId: `#${orderID.toString()}`, param: orderID }, { delay })
+
     // Debug tasks
     tasks.push({ orderId: orderID, taskName: "withdraw", taskNumber: tasks.length + 1, totalDelayMs: delay, expectedEndDate: calculateExpectedEndDate(delay) })
+
     delay += 100
     bumpQueue.add({ task: "set_order_status_finished", orderId: `#${orderID.toString()}`, param: orderID }, { delay })
     console.log("\u001b[1;32m" + 'SUCCESS ' + "\u001b[0m" + `adding tasks for order ID #${orderID.toString()}`)
-    console.log(`Total delay applied for order #${orderID.toString()} -> ${delay / 1000}seconds -> ${(delay / 1000) / 60}hrs -> ${delay}ms`)
+    console.log(`Total delay applied for order #${orderID.toString()} -> ${delay / 1000}seconds -> ${((delay / 1000) / 60) / 60}hrs -> ${delay}ms`)
     console.log('-------------------------------------------------------------')
 
 

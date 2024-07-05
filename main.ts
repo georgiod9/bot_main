@@ -2,7 +2,7 @@ import { RPC, PROGRAM_ID } from './config/constants';
 import { Connection, PublicKey } from '@solana/web3.js';
 import { createOrder, cancelOrder } from './_process';
 import { parseLogCancel, parseLogOrder } from './utils/parsing';
-import { decrementTxStatus, getTxStatus, incrementTxStatus } from './utils';
+import { connectDB, decrementTxStatus, getTxStatus, incrementTxStatus, resetTxStatus } from './utils';
 import { pingExecService } from './queue';
 
 const connection = new Connection(RPC)
@@ -39,6 +39,8 @@ async function check(status: number) {
     await pingExecService();
     if (txLog) {
         const logMessage = txLog.find(log => log.startsWith('Program log:'))
+
+        // Check for deployment transaction log
         if (!logMessage) {
             console.log(`Log message does not include "Program log" string. Searching for deployment tx.`)
 
@@ -47,7 +49,7 @@ async function check(status: number) {
             if (deployMessage && deployMessage.includes(PROGRAM_ID)) {
                 console.log('> Identified Initial deployment transaction.')
                 console.log('-------------------------------------------------------------')
-                incrementTxStatus();
+                incrementTxStatus()
             }
             else {
                 console.log(`Unidentified program log:`, txLog)
@@ -101,6 +103,9 @@ async function listen() {
 }
 
 async function main() {
+    console.log(`CONNECTING TO MONGO DB...`);
+    await connectDB();
+    console.log(`DB CONNECTED!`);
     console.log(`LISTENER RUNNING`)
     console.log('-------------------------------------------------------------')
     listen()
