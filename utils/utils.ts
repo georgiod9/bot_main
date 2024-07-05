@@ -231,7 +231,7 @@ export async function resetTxStatus() {
     if (!isMongoConnected) {
         await connectDB()
     }
-    const ok = await Status.findOneAndUpdate({}, { $set: { tx: 1 } }, { new: true })
+    const ok = await Status.findOneAndUpdate({}, { $set: { tx: 1 } }, { new: true, upsert: true })
     if (ok) {
         console.log("\u001b[1;32m" + 'SUCCESS ' + "\u001b[0m" + `tx status reset to ${ok.tx}`)
         console.log('-------------------------------------------------------------')
