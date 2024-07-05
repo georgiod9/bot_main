@@ -49,7 +49,7 @@ async function check(status: number) {
             if (deployMessage && deployMessage.includes(PROGRAM_ID)) {
                 console.log('> Identified Initial deployment transaction.')
                 console.log('-------------------------------------------------------------')
-                incrementTxStatus()
+                resetTxStatus(); // Set status to 1 in case of a new program
             }
             else {
                 console.log(`Unidentified program log:`, txLog)
