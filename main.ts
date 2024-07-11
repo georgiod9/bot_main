@@ -36,7 +36,7 @@ async function getTransactionLogs(status: number) {
 
 async function check(status: number) {
     const txLog = await getTransactionLogs(status)
-    await pingExecService();
+    // await pingExecService();
     if (txLog) {
         const logMessage = txLog.find(log => log.startsWith('Program log:'))
 
@@ -49,7 +49,7 @@ async function check(status: number) {
             if (deployMessage && deployMessage.includes(PROGRAM_ID)) {
                 console.log('> Identified Initial deployment transaction.')
                 console.log('-------------------------------------------------------------')
-                incrementTxStatus()
+                resetTxStatus(); // Set status to 1 in case of a new program
             }
             else {
                 console.log(`Unidentified program log:`, txLog)
@@ -111,7 +111,11 @@ async function main() {
     listen()
 }
 
-main().catch((e) => {
+main().catch(async (e) => {
     console.error('Main', e)
+    console.log(`RESTARTING SERVER...`)
+    console.log(`CONNECTING TO MONGO DB...`);
+    await connectDB();
+    console.log(`DB CONNECTED!`);
     listen()
 })
