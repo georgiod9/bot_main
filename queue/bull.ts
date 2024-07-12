@@ -115,7 +115,7 @@ export async function addOrderTasks(orderID: number, token: string, frequency: n
         // Create the buy/sell task
         const ri = Math.floor(Math.random() * PKS.length);
         const rt = Math.random() < 0.5 ? "buy_token_random" : "sell_token_random"
-        bumpQueue.add({ task: rt, orderId: `#${orderID.toString()}`, param: orderID, skcrypted: PKS[ri], token }, { delay: taskDelay })
+        bumpQueue.add({ task: rt, orderId: `#${orderID.toString()}`, param: orderID, skcrypted: PKS[ri], token, initialBalance: (funding / PKS.length) / 2 }, { delay: taskDelay })
 
         // Debug tasks
         tasks.push({ orderId: orderID, taskName: rt, taskNumber: tasks.length + 1, totalDelayMs: delay, expectedEndDate: calculateExpectedEndDate(taskDelay), assignedBot: ri })
